@@ -1,13 +1,3 @@
-resource "aws_s3_bucket" "b" {
-  bucket = "jstuessy-test-bucket-b"
-  acl    = "private"
-
-  tags = {
-    Name        = "My bucket"
-    Environment = "Dev"
-  }
-}
-
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -26,9 +16,23 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
+  instance_type = "t2.micro"
 
-  tags = {
-    Name = "HelloWorld"
-  }
+}
+
+resource "aws_eip" "elastic_ip" {
+ vpc = true
+ instance = aws_instance.web.id
+ associate_with_private_ip = aws_instance.web.private_ip
+}
+
+resource "local_file" "AnsibleInventory" {
+  content = templatefile("inventory.tmpl",
+    {
+      web-dns = aws_eip.elastic_ip.public_dns,
+      web-ip = aws_eip.elastic_ip.public_ip,
+      web-id = aws_instance.web.id
+    }
+  )
+  filename = "inventory"
 }

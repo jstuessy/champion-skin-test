@@ -44,6 +44,7 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
+  config.vm.synced_folder ".", "/home/vagrant/code"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -51,10 +52,11 @@ Vagrant.configure("2") do |config|
   #
   config.vm.provider "virtualbox" do |vb|
     # Display the VirtualBox GUI when booting the machine
-    vb.gui = true
+    vb.gui = false
   
     # Customize the amount of memory on the VM:
     vb.memory = "2048"
+    
   end
   #
   # View the documentation for the provider you are using for more
@@ -67,7 +69,8 @@ Vagrant.configure("2") do |config|
     curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
     apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     apt-get update
-    apt install ansible
-    apt install terraform
+    apt-get install --yes --no-install-recommends ansible terraform python3-boto3 python3-botocore
+    cd source/
+    terraform init
   SHELL
 end
