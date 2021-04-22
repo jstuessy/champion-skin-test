@@ -1,3 +1,24 @@
 plugin: amazon.aws.aws_ec2
 regions:
   - us-west-2
+include_extra_api_calls: true
+strict: true
+strict_permissions: false
+keyed_groups:
+  - key: tags.owner
+    prefix: owner
+    parent_group: tags
+  - key: tags.subject
+    prefix: subject
+    parent_group: tags
+  - key: tags.context
+    prefix: context
+    parent_group: tags
+  - key: placement.region
+    prefix: region
+  - key: architecture
+    prefix: architecture
+  - key: instance_type
+    prefix: instance_type
+  - key: 'security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
