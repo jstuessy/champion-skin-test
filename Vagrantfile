@@ -44,7 +44,7 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
-  config.vm.synced_folder ".", "/home/vagrant/code"
+  config.vm.synced_folder ".", "/home/vagrant/project"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -70,7 +70,10 @@ Vagrant.configure("2") do |config|
     apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     apt-get update
     apt-get install --yes --no-install-recommends ansible terraform python3-boto3 python3-botocore
-    cd source/
+    cd project/
+    source .env
     terraform init
+    cp ansible.example.cfg ~/.ansible.cfg
+    ansible-galaxy collection install amazon.aws
   SHELL
 end
