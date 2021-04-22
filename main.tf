@@ -15,24 +15,19 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "web" {
+  count = 3
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
-
+  tags = {
+    subject = "consul"
+    context = "master"
+    owner   = "champion-skinner"
+  }
 }
 
 resource "aws_eip" "elastic_ip" {
- vpc = true
- instance = aws_instance.web.id
- associate_with_private_ip = aws_instance.web.private_ip
-}
-
-resource "local_file" "AnsibleInventory" {
-  content = templatefile("inventory.tmpl",
-    {
-      web-dns = aws_eip.elastic_ip.public_dns,
-      web-ip = aws_eip.elastic_ip.public_ip,
-      web-id = aws_instance.web.id
-    }
-  )
-  filename = "inventory"
+  count = 3
+  vpc                       = true
+  instance                  = aws_instance.web[count.index].id
+  associate_with_private_ip = aws_instance.web[count.index].private_ip
 }

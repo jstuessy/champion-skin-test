@@ -1,0 +1,8 @@
+---
+- name: Setup Consul
+  hosts: subject_consul
+  tasks:
+    - name: Download binary
+      ansible.builtin.get_url: 
+        url: "https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_linux_amd64.zip"
+        dest: "/tmp/"
