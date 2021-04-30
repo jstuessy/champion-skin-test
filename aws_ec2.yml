@@ -22,3 +22,14 @@ keyed_groups:
     prefix: instance_type
   - key: 'security_groups|json_query("[].group_id")'
     prefix: 'security_groups'
+# hostnames:
+#   - tag:Name=Tag1,Name=Tag2  # Return specific hosts only
+#   - tag:CustomDNSName
+#   - dns-name
+#   - name: 'tag:Name=Tag1,Name=Tag2'
+#   - name: 'private-ip-address'
+#     separator: '_'
+#     prefix: 'tag:Name'
+
+compose: 
+  ansible_host: private_ip_address
