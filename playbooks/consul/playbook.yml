@@ -2,8 +2,15 @@
 - name: Setup Consul
   hosts: subject_consul
   tasks:
-    - name: Download binary
+    - name: Download binary zip
       ansible.builtin.get_url: 
         url: "https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_linux_amd64.zip"
         dest: "/tmp/"
         checksum: "sha256:https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_SHA256SUMS"
+    - name: Unzip binary
+      ansible.builtin.unarchive:
+        src: /tmp/consul_1.9.5_linux_amd64.zip
+        dest: /usr/local/bin
+        remote_src: yes
+    - name: Verify install
+    - name: Run agent
