@@ -102,7 +102,7 @@ resource "tls_private_key" "deployer_key" {
 
 resource "aws_key_pair" "aws_deployer_key" {
   key_name   = "aws_deployer_key"
-  public_key = tls_private_key.deployer_key.public_key_pem
+  public_key = tls_private_key.deployer_key.public_key_openssh
 }
 
 resource "aws_instance" "web" {
@@ -120,8 +120,16 @@ resource "aws_instance" "web" {
   }
 }
 
-resource "local_file" "aws_ssh_deploy_key" {
-  content         = tls_private_key.deployer_key.public_key_pem
-  filename        = "key.pem"
-  file_permission = 600
+resource "local_file" "aws_public_deploy_key" {
+  content              = tls_private_key.deployer_key.public_key_pem
+  filename             = pathexpand("~/.ssh/aws_ec2_rsa.pub.pem")
+  file_permission      = "600"
+  directory_permission = "700"
+}
+
+resource "local_file" "aws_private_deploy_key" {
+  content              = tls_private_key.deployer_key.private_key_pem
+  filename             = pathexpand("~/.ssh/aws_ec2_rsa.pem")
+  file_permission      = "600"
+  directory_permission = "700"
 }
