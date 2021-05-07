@@ -2,15 +2,44 @@
 - name: Setup Consul
   hosts: subject_consul
   tasks:
+    - name: Ensure consul group exists
+      ansible.builtin.group:
+        name: consul
+        state: present
+      become: true
+    - name: Ensure consul user exists
+      ansible.builtin.user:
+        name: consul
+        group: consul
+        createhome: false
+      become: true
+    - name: Ensure dependencies are installed
+      package:
+        name: unzip
+        state: present
+      become: true
     - name: Download binary zip
       ansible.builtin.get_url: 
         url: "https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_linux_amd64.zip"
         dest: "/tmp/"
         checksum: "sha256:https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_SHA256SUMS"
+        owner: consul
+        group: consul
+      become: true
+    - name: Ensure directory exists
+      ansible.builtin.file:
+        path: /tmp/consul/
+        state: directory
+        owner: consul
+        group: consul
+      become: true
     - name: Unzip binary
       ansible.builtin.unarchive:
         src: /tmp/consul_1.9.5_linux_amd64.zip
         dest: /usr/local/bin
-        remote_src: yes
-    - name: Verify install
-    - name: Run agent
+        remote_src: true
+        owner: consul
+        group: consul
+      become: true
+    # - name: Verify install
+    # - name: Run agent
