@@ -1,6 +1,8 @@
 ---
 - name: Setup Consul
   hosts: subject_consul
+  vars:
+    consul_version: "1.9.5"
   tasks:
     - name: Ensure consul group exists
       ansible.builtin.group:
@@ -11,6 +13,9 @@
       ansible.builtin.user:
         name: consul
         group: consul
+        system: true
+        home: /opt/consul.d
+        shell: /bin/false
         createhome: false
       become: true
     - name: Ensure dependencies are installed
@@ -20,26 +25,33 @@
       become: true
     - name: Download binary zip
       ansible.builtin.get_url: 
-        url: "https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_linux_amd64.zip"
+        url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
         dest: "/tmp/"
-        checksum: "sha256:https://releases.hashicorp.com/consul/1.9.5/consul_1.9.5_SHA256SUMS"
+        checksum: "sha256:https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_SHA256SUMS"
         owner: consul
         group: consul
       become: true
     - name: Ensure directory exists
       ansible.builtin.file:
-        path: /tmp/consul/
+        path: /opt/consul
         state: directory
         owner: consul
         group: consul
       become: true
     - name: Unzip binary
       ansible.builtin.unarchive:
-        src: /tmp/consul_1.9.5_linux_amd64.zip
-        dest: /usr/local/bin
+        src: "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+        dest: /usr/bin/
         remote_src: true
         owner: consul
         group: consul
       become: true
     # - name: Verify install
+    - name: Install consul autocomplete
+      ansible.builtin.command: consul -autocomplete-install
+    - name: Enable consul autocomplete
+      ansible.builtin.command: complete -C /usr/bin/consul consul
+    #Keys are output in plain text, how can we auto add them to the config file in e
+    - name: Generate keygen
+      command: consul keygen
     # - name: Run agent
