@@ -14,9 +14,9 @@
         name: consul
         group: consul
         system: true
-        home: /opt/consul.d
+        home: /etc/consul.d
         shell: /bin/false
-        createhome: false
+        createhome: true
       become: true
     - name: Ensure dependencies are installed
       package:
@@ -46,12 +46,48 @@
         owner: consul
         group: consul
       become: true
-    # - name: Verify install
-    - name: Install consul autocomplete
-      ansible.builtin.command: consul -autocomplete-install
-    - name: Enable consul autocomplete
-      ansible.builtin.command: complete -C /usr/bin/consul consul
-    #Keys are output in plain text, how can we auto add them to the config file in e
+    - name: Verify that consul is usable
+      command: "consul --version"
+    - set_fact: 
+        bootstrap_hostname: "{{ ansible_play_hosts | random }}"
     - name: Generate keygen
       command: consul keygen
-    # - name: Run agent
+      register: consul_key
+      when: inventory_hostname == bootstrap_hostname
+    # https://learn.hashicorp.com/tutorials/consul/deployment-guide#generate-tls-certificates-for-rpc-encryption
+    # - name: Generate tls certificates for rpc encryption
+    #   command: consul tls ca create
+    - name: Copy bootstrap configuration to bootstrap server
+      ansible.builtin.template:
+        src: bootstrap.hcl.j2
+        dest: /etc/consul.d/bootstrap.hcl
+        mode: "640"
+        owner: consul
+        group: consul
+      when: inventory_hostname == bootstrap_hostname
+      become: true
+    - name: Copy non-bootstrap configuration to non-bootstrap servers
+      ansible.builtin.template:
+        src: server.hcl.j2
+        dest: /etc/consul.d/sever.hcl
+        mode: "640"
+        owner: consul
+        group: consul
+      when: inventory_hostname != bootstrap_hostname
+      become: true
+    # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
+    # - name: Copy over systemd service file
+    # # https://learn.hashicorp.com/tutorials/consul/deployment-guide#start-the-consul-service
+    # - name: Validate consul configuration
+    # - name: Enable consul service
+    # - name: Start consul service
+
+
+# - name: Setup Consul
+#   hosts: subject_consul
+#   tasks:
+#     # TODO: Keys are output in plain text, how can we auto add them to the config file in e
+#     - name: Generate keygen
+#       command: consul keygen
+#       register: consul_key
+#     # - name: Run agent
