@@ -1,4 +1,9 @@
 {{ ansible_managed | comment }}
 server = true
 bootstrap_expect = 3
-ui = true
+data_dir = "/opt/consul"
+retry_join = {{ ansible_play_hosts | difference(inventory_hostname) | map('extract', hostvars, ['ansible_facts', 'eth0', 'ipv4', 'address']) | list | to_json }}
+ui_config = {
+  enabled = true
+}
+

@@ -24,7 +24,7 @@
         state: present
       become: true
     - name: Download binary zip
-      ansible.builtin.get_url: 
+      ansible.builtin.get_url:
         url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
         dest: "/tmp/"
         checksum: "sha256:https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_SHA256SUMS"
@@ -46,13 +46,13 @@
         owner: consul
         group: consul
       become: true
+    # TODO: why does state return "changed" if it's always exit 0
     - name: Verify that consul is usable
       command: "consul --version"
     - name: Generate keygen
       command: consul keygen
       register: consul_key
       run_once: true
-      # when: inventory_hostname == bootstrap_hostname
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#generate-tls-certificates-for-rpc-encryption
     # - name: Generate tls certificates for rpc encryption
     #   command: consul tls ca create
@@ -68,11 +68,14 @@
         - server.hcl
         - bootstrap.hcl
     - name: Determine which server will be the Bootstrap server
-      set_fact: 
+      set_fact:
         bootstrap_hostname: "{{ ansible_play_hosts | random }}"
       run_once: true
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
     - name: Copy over systemd service file
+      # consul agent -config-file=/etc/consul.d/server.hcl
+      # consul agent -config-file=/etc/consul.d/server.hcl
+      # consul agent -config-file=/etc/consul.d/server.hcl -config-file=/etc/consul.d/bootstrap.hcl
       ansible.builtin.template:
         src: consul.service.j2
         dest: /usr/lib/systemd/system/consul.service
@@ -82,9 +85,29 @@
       become: true
       vars:
         deployment_type: "{{ 'bootstrap' if inventory_hostname == bootstrap_hostname else 'server' }}"
-    # # https://learn.hashicorp.com/tutorials/consul/deployment-guide#start-the-consul-service
-    # - name: Validate consul configuration
-    
-    # - name: Enable consul service
-    
-    # - name: Start consul service
+    # https://learn.hashicorp.com/tutorials/consul/deployment-guide#start-the-consul-service
+    - name: Validate consul configuration
+      command: "consul validate /etc/consul.d/{{ item }}"
+      become: true
+      loop:
+        - server.hcl
+        - bootstrap.hcl
+    - name: Enable consul service
+      ansible.builtin.systemd:
+        name: consul
+        enabled: true
+      become: true
+    - name: Start consul service
+      ansible.builtin.systemd:
+        name: consul
+        state: started
+      become: true
+      # TODO: Failing to join, can't reach ip addresses
+    - name: Reload Daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+      become: true
+      # TODO: Only do when file has changed
+      # TODO: ensure consul is running correctly
+
+      
