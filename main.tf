@@ -46,11 +46,17 @@ resource "aws_route_table_association" "mfi_route_table_association" {
 resource "aws_security_group" "allow_http" {
   name        = "allow_http"
   description = "Allow HTTP traffic"
+resource "aws_security_group" "allow_ssh" {
+  name        = "allow_ssh"
+  description = "Allow SSH traffic"
   vpc_id      = aws_vpc.main.id
   ingress {
     description = "HTTP"
     from_port   = 80
     to_port     = 80
+    description = "SSH"
+    from_port   = 0
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -65,11 +71,66 @@ resource "aws_security_group" "allow_http" {
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH traffic"
+resource "aws_security_group" "allow_consul" {
+  name        = "allow_consul"
+  description = "Allow Consul traffic"
   vpc_id      = aws_vpc.main.id
   ingress {
     description = "SSH"
     from_port   = 0
     to_port     = 22
+    description = "HTTP"
+    from_port   = 8500
+    to_port     = 8500
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "DNS"
+    from_port   = 8600
+    to_port     = 8600
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "DNS udp"
+    from_port   = 8600
+    to_port     = 8600
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Lan Serf"
+    from_port   = 8301
+    to_port     = 8301
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Lan Serf udp"
+    from_port   = 8301
+    to_port     = 8301
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Wan Serf"
+    from_port   = 8302
+    to_port     = 8302
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Wan Serf udp"
+    from_port   = 8302
+    to_port     = 8302
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Server RPC"
+    from_port   = 8300
+    to_port     = 8300
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -112,7 +173,7 @@ resource "aws_instance" "web" {
   key_name                    = aws_key_pair.aws_deployer_key.key_name
   associate_public_ip_address = true
   subnet_id                   = aws_subnet.main.id
-  vpc_security_group_ids      = [aws_security_group.allow_http.id, aws_security_group.allow_ssh.id]
+  vpc_security_group_ids      = [aws_security_group.allow_consul.id, aws_security_group.allow_ssh.id]
   tags = {
     subject = "consul"
     context = "master"
