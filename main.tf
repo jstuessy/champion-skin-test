@@ -43,17 +43,11 @@ resource "aws_route_table_association" "mfi_route_table_association" {
   route_table_id = aws_route_table.rt.id
 }
 
-resource "aws_security_group" "allow_http" {
-  name        = "allow_http"
-  description = "Allow HTTP traffic"
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH traffic"
   vpc_id      = aws_vpc.main.id
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
     description = "SSH"
     from_port   = 0
     to_port     = 22
@@ -68,17 +62,11 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
-resource "aws_security_group" "allow_ssh" {
-  name        = "allow_ssh"
-  description = "Allow SSH traffic"
 resource "aws_security_group" "allow_consul" {
   name        = "allow_consul"
   description = "Allow Consul traffic"
   vpc_id      = aws_vpc.main.id
   ingress {
-    description = "SSH"
-    from_port   = 0
-    to_port     = 22
     description = "HTTP"
     from_port   = 8500
     to_port     = 8500

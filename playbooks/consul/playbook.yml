@@ -73,9 +73,6 @@
       run_once: true
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
     - name: Copy over systemd service file
-      # consul agent -config-file=/etc/consul.d/server.hcl
-      # consul agent -config-file=/etc/consul.d/server.hcl
-      # consul agent -config-file=/etc/consul.d/server.hcl -config-file=/etc/consul.d/bootstrap.hcl
       ansible.builtin.template:
         src: consul.service.j2
         dest: /usr/lib/systemd/system/consul.service
@@ -102,7 +99,6 @@
         name: consul
         state: started
       become: true
-      # TODO: Failing to join, can't reach ip addresses
     - name: Reload Daemon
       ansible.builtin.systemd:
         daemon_reload: true
