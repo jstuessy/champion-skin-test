@@ -6,4 +6,4 @@ retry_join = {{ ansible_play_hosts | difference(inventory_hostname) | map('extra
 ui_config = {
   enabled = true
 }
-
+client_addr = "0.0.0.0"

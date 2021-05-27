@@ -16,37 +16,9 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # This is the Canonical primary key in the AMI registry
 }
 
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
-}
-
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.main.id
-}
-
-resource "aws_subnet" "main" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = aws_vpc.main.cidr_block
-  availability_zone = "${data.aws_region.current.name}a"
-}
-
-resource "aws_route_table" "rt" {
-  vpc_id = aws_vpc.main.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-}
-
-resource "aws_route_table_association" "mfi_route_table_association" {
-  subnet_id      = aws_subnet.main.id
-  route_table_id = aws_route_table.rt.id
-}
-
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH traffic"
-  vpc_id      = aws_vpc.main.id
   ingress {
     description = "SSH"
     from_port   = 0
@@ -65,7 +37,9 @@ resource "aws_security_group" "allow_ssh" {
 resource "aws_security_group" "allow_consul" {
   name        = "allow_consul"
   description = "Allow Consul traffic"
-  vpc_id      = aws_vpc.main.id
+
+  # TODO: Switch to make it so only in-network machines can talk to each other
+  # TODO: ["0.0.0.0/0"] -> ["0.0.0.0/0", "::/0"]
   ingress {
     description = "HTTP"
     from_port   = 8500
@@ -149,6 +123,7 @@ resource "tls_private_key" "deployer_key" {
   rsa_bits  = 4096
 }
 
+# TODO: Rename to "deployer_public_key"
 resource "aws_key_pair" "aws_deployer_key" {
   key_name   = "aws_deployer_key"
   public_key = tls_private_key.deployer_key.public_key_openssh
@@ -159,8 +134,6 @@ resource "aws_instance" "web" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.aws_deployer_key.key_name
-  associate_public_ip_address = true
-  subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.allow_consul.id, aws_security_group.allow_ssh.id]
   tags = {
     subject = "consul"
@@ -181,4 +154,16 @@ resource "local_file" "aws_private_deploy_key" {
   filename             = pathexpand("~/.ssh/aws_ec2_rsa.pem")
   file_permission      = "600"
   directory_permission = "700"
+}
+
+output "web_public_ip_0" {
+  value = aws_instance.web[0].public_ip
+}
+
+output "web_public_ip_1" {
+  value = aws_instance.web[1].public_ip
+}
+
+output "web_public_ip_2" {
+  value = aws_instance.web[2].public_ip
 }

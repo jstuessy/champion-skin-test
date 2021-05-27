@@ -99,6 +99,11 @@
         name: consul
         state: started
       become: true
+    - name: Restart consul service
+      ansible.builtin.systemd:
+        name: consul
+        state: restarted
+      become: true
     - name: Reload Daemon
       ansible.builtin.systemd:
         daemon_reload: true
