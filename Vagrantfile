@@ -73,7 +73,10 @@ Vagrant.configure("2") do |config|
     cd project/
     source .env
     terraform init
+
+    # Run manually
     ln --symbolic --force `pwd`/ansible.example.cfg ~/.ansible.cfg
+
     ansible-galaxy collection install amazon.aws
   SHELL
 end

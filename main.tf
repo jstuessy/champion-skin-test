@@ -156,6 +156,10 @@ resource "local_file" "aws_private_deploy_key" {
   directory_permission = "700"
 }
 
+output "current_region" {
+  value = data.aws_region.current.name
+}
+
 output "web_public_ip_0" {
   value = aws_instance.web[0].public_ip
 }
