@@ -34,9 +34,9 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
-resource "aws_security_group" "allow_consul" {
-  name        = "allow_consul"
-  description = "Allow Consul traffic"
+resource "aws_security_group" "allow_consul_server" {
+  name        = "allow_consul_server"
+  description = "Allow Consul Server traffic"
 
   # TODO: Switch to make it so only in-network machines can talk to each other
   # TODO: ["0.0.0.0/0"] -> ["0.0.0.0/0", "::/0"]
@@ -104,39 +104,63 @@ resource "aws_security_group" "allow_consul" {
   }
 }
 
-resource "aws_eip" "elastic_ip" {
-  count                     = 3
-  vpc                       = true
-  instance                  = aws_instance.web[count.index].id
-  associate_with_private_ip = aws_instance.web[count.index].private_ip
-}
+# resource "aws_eip" "consul_elastic_ip" {
+#   count                     = 3
+#   vpc                       = true
+#   instance                  = aws_instance.consul[count.index].id
+#   associate_with_private_ip = aws_instance.consul[count.index].private_ip
+# }
 
-# TODO: Rename, "eip_assoc" is a bad name
-resource "aws_eip_association" "eip_assoc" {
-  count         = 3
-  instance_id   = aws_instance.web[count.index].id
-  allocation_id = aws_eip.elastic_ip[count.index].id
-}
+# resource "aws_eip_association" "consul_elastic_ip_association" {
+#   count         = 3
+#   instance_id   = aws_instance.consul[count.index].id
+#   allocation_id = aws_eip.consul_elastic_ip[count.index].id
+# }
+
+# resource "aws_eip" "vault_elastic_ip" {
+#   count                     = 3
+#   vpc                       = true
+#   instance                  = aws_instance.vault[count.index].id
+#   associate_with_private_ip = aws_instance.vault[count.index].private_ip
+# }
+
+# resource "aws_eip_association" "vault_elastic_ip_association" {
+#   count         = 3
+#   instance_id   = aws_instance.vault[count.index].id
+#   allocation_id = aws_eip.vault_elastic_ip[count.index].id
+# }
 
 resource "tls_private_key" "deployer_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-# TODO: Rename to "deployer_public_key"
-resource "aws_key_pair" "aws_deployer_key" {
-  key_name   = "aws_deployer_key"
+resource "aws_key_pair" "deployer_public_key" {
+  key_name   = "deployer_public_key"
   public_key = tls_private_key.deployer_key.public_key_openssh
 }
 
-resource "aws_instance" "web" {
+resource "aws_instance" "consul" {
   count                       = 3
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = "t2.micro"
-  key_name                    = aws_key_pair.aws_deployer_key.key_name
-  vpc_security_group_ids      = [aws_security_group.allow_consul.id, aws_security_group.allow_ssh.id]
+  key_name                    = aws_key_pair.deployer_public_key.key_name
+  vpc_security_group_ids      = [aws_security_group.allow_consul_server.id, aws_security_group.allow_ssh.id]
   tags = {
-    subject = "consul"
+    subject = "consul-server"
+    context = "master"
+    owner   = "champion-skinner"
+  }
+}
+
+resource "aws_instance" "vault" {
+  count                       = 3
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.micro"
+  key_name                    = aws_key_pair.deployer_public_key.key_name
+  vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
+  tags = {
+    subject = "vault"
     context = "master"
     owner   = "champion-skinner"
   }
@@ -145,7 +169,7 @@ resource "aws_instance" "web" {
 resource "local_file" "aws_public_deploy_key" {
   content              = tls_private_key.deployer_key.public_key_pem
   filename             = pathexpand("~/.ssh/aws_ec2_rsa.pub.pem")
-  file_permission      = "600"
+  file_permission      = "644"
   directory_permission = "700"
 }
 
@@ -160,14 +184,26 @@ output "current_region" {
   value = data.aws_region.current.name
 }
 
-output "web_public_ip_0" {
-  value = aws_instance.web[0].public_ip
+output "consul_public_ip_0" {
+  value = aws_instance.consul[0].public_ip
 }
 
-output "web_public_ip_1" {
-  value = aws_instance.web[1].public_ip
+output "consul_public_ip_1" {
+  value = aws_instance.consul[1].public_ip
 }
 
-output "web_public_ip_2" {
-  value = aws_instance.web[2].public_ip
+output "consul_public_ip_2" {
+  value = aws_instance.consul[2].public_ip
+}
+
+output "vault_public_ip_0" {
+  value = aws_instance.vault[0].public_ip
+}
+
+output "vault_public_ip_1" {
+  value = aws_instance.vault[1].public_ip
+}
+
+output "vault_public_ip_2" {
+  value = aws_instance.vault[2].public_ip
 }

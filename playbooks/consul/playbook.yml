@@ -1,6 +1,6 @@
 ---
 - name: Setup Consul
-  hosts: subject_consul
+  hosts: subject_consul_server
   vars:
     consul_version: "1.9.5"
   tasks:
