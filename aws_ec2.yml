@@ -1,0 +1,35 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-west-2
+include_extra_api_calls: true
+strict: true
+strict_permissions: false
+keyed_groups:
+  - key: tags.owner
+    prefix: owner
+    parent_group: tags
+  - key: tags.subject
+    prefix: subject
+    parent_group: tags
+  - key: tags.context
+    prefix: context
+    parent_group: tags
+  - key: placement.region
+    prefix: region
+  - key: architecture
+    prefix: architecture
+  - key: instance_type
+    prefix: instance_type
+  - key: 'security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
+# hostnames:
+#   - tag:Name=Tag1,Name=Tag2  # Return specific hosts only
+#   - tag:CustomDNSName
+#   - dns-name
+#   - name: 'tag:Name=Tag1,Name=Tag2'
+#   - name: 'private-ip-address'
+#     separator: '_'
+#     prefix: 'tag:Name'
+
+compose: 
+  ansible_host: public_ip_address

@@ -3,3 +3,6 @@
 .terraform/
 *.tfstate*
 provider.tf
+.vagrant
+.env
+key.pem

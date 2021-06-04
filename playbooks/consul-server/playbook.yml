@@ -1,0 +1,80 @@
+---
+- name: Setup Consul Server
+  hosts: subject_consul_server
+  vars:
+    consul_version: "1.9.5"
+  tasks:
+    - amazon.aws.ec2_metadata_facts:
+    - import_role:
+        name: consul-agent
+    - name: Generate keygen
+      command: consul keygen
+      register: consul_key
+      run_once: true
+    - name: Determine which server will be the Bootstrap server
+      run_once: true
+      set_fact:
+        bootstrap_hostname: "{{ ansible_play_hosts | random }}"
+    - name: Tag the bootstrap server
+      delegate_to: 127.0.0.1
+      when: inventory_hostname == bootstrap_hostname
+      amazon.aws.ec2_tag:
+        resource: "{{ ansible_ec2_instance_id }}"
+        tags:
+          consul_ui: true
+        state: present
+        region: us-west-2
+    # https://learn.hashicorp.com/tutorials/consul/deployment-guide#generate-tls-certificates-for-rpc-encryption
+    # - name: Generate tls certificates for rpc encryption
+    #   command: consul tls ca create
+    - name: Copy consul configuration to servers
+      become: true
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/etc/consul.d/{{ item }}"
+        mode: "640"
+        owner: consul
+        group: consul
+      loop:
+        - server.hcl
+        - bootstrap.hcl
+    # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
+    - name: Copy over systemd service file
+      become: true
+      ansible.builtin.template:
+        src: consul.service.j2
+        dest: /usr/lib/systemd/system/consul.service
+        mode: "660"
+        owner: consul
+        group: consul
+      vars:
+        deployment_type: "{{ 'bootstrap' if inventory_hostname == bootstrap_hostname else 'server' }}"
+    # https://learn.hashicorp.com/tutorials/consul/deployment-guide#start-the-consul-service
+    - name: Validate consul configuration
+      become: true
+      command: "consul validate /etc/consul.d/{{ item }}"
+      loop:
+        - server.hcl
+        - bootstrap.hcl
+    - name: Enable consul service
+      become: true
+      ansible.builtin.systemd:
+        name: consul
+        enabled: true
+    - name: Start consul service
+      become: true
+      ansible.builtin.systemd:
+        name: consul
+        state: started
+    - name: Restart consul service
+      become: true
+      ansible.builtin.systemd:
+        name: consul
+        state: restarted
+    - name: Reload Daemon
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true
+    # TODO: Only do when file has changed
+
+      
