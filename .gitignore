@@ -1,8 +1,6 @@
-
-.terraform.lock.hcl
 .terraform/
+.vagrant/
 *.tfstate*
-provider.tf
-.vagrant
+.terraform.lock.hcl
 .env
-key.pem
+provider.tf
