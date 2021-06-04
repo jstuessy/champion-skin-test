@@ -141,11 +141,11 @@ resource "aws_key_pair" "deployer_public_key" {
 }
 
 resource "aws_instance" "consul" {
-  count                       = 3
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t2.micro"
-  key_name                    = aws_key_pair.deployer_public_key.key_name
-  vpc_security_group_ids      = [aws_security_group.allow_consul_server.id, aws_security_group.allow_ssh.id]
+  count                  = 3
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t2.micro"
+  key_name               = aws_key_pair.deployer_public_key.key_name
+  vpc_security_group_ids = [aws_security_group.allow_consul_server.id, aws_security_group.allow_ssh.id]
   tags = {
     subject = "consul-server"
     context = "master"
@@ -154,11 +154,11 @@ resource "aws_instance" "consul" {
 }
 
 resource "aws_instance" "vault" {
-  count                       = 3
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t2.micro"
-  key_name                    = aws_key_pair.deployer_public_key.key_name
-  vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
+  count                  = 3
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t2.micro"
+  key_name               = aws_key_pair.deployer_public_key.key_name
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
   tags = {
     subject = "vault"
     context = "master"
