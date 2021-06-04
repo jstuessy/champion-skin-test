@@ -1,0 +1,10 @@
+---
+- name: Setup Vault Server
+  hosts: subject_vault
+  vars:
+    consul_version: "1.9.5"
+  tasks:
+    - import_role: 
+        name: consul-agent
+    
+
