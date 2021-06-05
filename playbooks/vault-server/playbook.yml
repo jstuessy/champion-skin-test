@@ -3,8 +3,55 @@
   hosts: subject_vault
   vars:
     consul_version: "1.9.5"
+    vault_version: "1.7.2"
   tasks:
     - import_role: 
         name: consul-agent
     #ToDo: Install vault
-
+    - name: Ensure vault group exists
+      ansible.builtin.group:
+        name: vault
+        state: present
+      become: true
+    - name: Ensure vault user exists
+      ansible.builtin.user:
+        name: vault
+        group: vault
+        system: true
+        shell: /sbin/nologin
+        createhome: false
+      become: true
+    - name: Ensure directory exists
+      ansible.builtin.file:
+        path: /opt/vault
+        state: directory
+        owner: vault
+        group: vault
+      become: true
+    - name: Download binary
+      get_url:
+        url: https://releases.hashicorp.com/vault/{{vault_version}}/vault_{{vault_version}}_linux_amd64.zip
+        dest: /tmp/vault_{{vault_version}}_linux_amd64.zip
+        owner: vault
+        group: vault
+        mode: 0755
+      become: true
+    - name: Unzip vault archive
+      unarchive:
+        src: /tmp/vault_{{vault_version}}_linux_amd64.zip
+        dest: /usr/bin/
+        remote_src: true
+        owner: vault
+        group: vault
+        mode: 0755
+      become: true
+    - name: Verify that vault is usable
+      command: "vault --version"
+    - name: Copy over systemd service file
+      become: true
+      ansible.builtin.template:
+        src: vault.service.j2
+        dest: /usr/lib/systemd/system/vault.service
+        mode: "660"
+        owner: vault
+        group: vault
