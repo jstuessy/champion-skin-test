@@ -1,5 +1,6 @@
 ---
 - name: Setup Vault Server
+  # TODO: make sure this is named subject_vault_server
   hosts: subject_vault
   vars:
     consul_version: "1.9.5"
@@ -7,7 +8,6 @@
   tasks:
     - import_role: 
         name: consul-agent
-    #ToDo: Install vault
     - name: Ensure vault group exists
       ansible.builtin.group:
         name: vault
@@ -21,9 +21,16 @@
         shell: /sbin/nologin
         createhome: false
       become: true
-    - name: Ensure directory exists
+    - name: Ensure data directory exists
       ansible.builtin.file:
         path: /opt/vault
+        state: directory
+        owner: vault
+        group: vault
+      become: true
+    - name: Ensure configuration directory exists
+      ansible.builtin.file:
+        path: /etc/vault.d
         state: directory
         owner: vault
         group: vault
@@ -34,19 +41,20 @@
         dest: /tmp/vault_{{vault_version}}_linux_amd64.zip
         owner: vault
         group: vault
-        mode: 0755
+        mode: "755"
       become: true
-    - name: Unzip vault archive
+    - name: Unzip binary
       unarchive:
         src: /tmp/vault_{{vault_version}}_linux_amd64.zip
         dest: /usr/bin/
         remote_src: true
         owner: vault
         group: vault
-        mode: 0755
+        mode: "755"
       become: true
     - name: Verify that vault is usable
       command: "vault --version"
+    # TODO: Rename to "vault-server"
     - name: Copy over systemd service file
       become: true
       ansible.builtin.template:
@@ -55,3 +63,36 @@
         mode: "660"
         owner: vault
         group: vault
+    - name: Copy over vault configuration files
+      become: true
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/etc/vault.d/{{ item }}"
+        mode: "640"
+        owner: vault
+        group: vault
+      loop:
+        - "server.hcl"
+        - "ui.hcl"
+    # TODO: Rename to "vault-server"
+    - name: Enable vault service
+      become: true
+      ansible.builtin.systemd:
+        name: vault
+        enabled: true
+    # TODO: Rename to "vault-server"
+    - name: Start vault service
+      become: true
+      ansible.builtin.systemd:
+        name: vault
+        state: started
+    # TODO: Rename to "vault-server"
+    - name: Restart vault service
+      become: true
+      ansible.builtin.systemd:
+        name: vault
+        state: restarted
+    - name: Reload Daemon
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true

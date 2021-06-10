@@ -19,12 +19,7 @@
   become: true
   loop:
     - unzip
-- name: Install pip
-  apt:
-    name: python3-pip
-    update_cache: yes
-    state: present
-  become: true
+    - python3-pip
 - name: Ensure python dependencies are installed
   pip:
     name: "{{ item }}"
@@ -41,7 +36,7 @@
     owner: consul
     group: consul
   become: true
-- name: Ensure directory exists
+- name: Ensure data directory exists
   ansible.builtin.file:
     path: /opt/consul
     state: directory

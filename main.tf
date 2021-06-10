@@ -103,7 +103,17 @@ resource "aws_security_group" "allow_consul_server" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
+resource "aws_security_group" "allow_vault_server" {
+  name        = "allow_vault_server"
+  description = "Allow Vault Server traffic"
+  ingress {
+    description = "HTTP"
+    from_port   = 8200
+    to_port     = 8200
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 # resource "aws_eip" "consul_elastic_ip" {
 #   count                     = 3
 #   vpc                       = true
