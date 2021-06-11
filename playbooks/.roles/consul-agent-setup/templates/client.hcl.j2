@@ -1,0 +1,3 @@
+{{ ansible_managed | comment }}
+data_dir = "/opt/consul"
+retry_join = {{ ansible_play_hosts | difference(inventory_hostname) | map('extract', hostvars, ['ansible_facts', 'eth0', 'ipv4', 'address']) | list | to_json }}
