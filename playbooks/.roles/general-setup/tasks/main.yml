@@ -1,0 +1,19 @@
+- name : Update Apt Cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+- name: Ensure ubuntu dependencies are installed
+  package:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - python3-pip
+- name: Ensure python dependencies are installed
+  pip:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - botocore
+    - boto3

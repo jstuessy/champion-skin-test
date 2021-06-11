@@ -1,13 +1,15 @@
 ---
 - name: Setup Vault Server
   # TODO: make sure this is named subject_vault_server
-  hosts: subject_vault
+  hosts: subject_vault_server
   vars:
     consul_version: "1.9.5"
     vault_version: "1.7.2"
   tasks:
-    - import_role: 
-        name: consul-agent
+    - import_role:
+        name: general-setup
+    - import_role:
+        name: consul-install
     - name: Ensure vault group exists
       ansible.builtin.group:
         name: vault
@@ -54,12 +56,11 @@
       become: true
     - name: Verify that vault is usable
       command: "vault --version"
-    # TODO: Rename to "vault-server"
     - name: Copy over systemd service file
       become: true
       ansible.builtin.template:
-        src: vault.service.j2
-        dest: /usr/lib/systemd/system/vault.service
+        src: vault-server.service.j2
+        dest: /usr/lib/systemd/system/vault-server.service
         mode: "660"
         owner: vault
         group: vault
@@ -74,23 +75,20 @@
       loop:
         - "server.hcl"
         - "ui.hcl"
-    # TODO: Rename to "vault-server"
     - name: Enable vault service
       become: true
       ansible.builtin.systemd:
-        name: vault
+        name: vault-server
         enabled: true
-    # TODO: Rename to "vault-server"
     - name: Start vault service
       become: true
       ansible.builtin.systemd:
-        name: vault
+        name: vault-server
         state: started
-    # TODO: Rename to "vault-server"
     - name: Restart vault service
       become: true
       ansible.builtin.systemd:
-        name: vault
+        name: vault-server
         state: restarted
     - name: Reload Daemon
       become: true

@@ -6,7 +6,9 @@
   tasks:
     - amazon.aws.ec2_metadata_facts:
     - import_role:
-        name: consul-agent
+        name: general-setup
+    - import_role:
+        name: consul-install
     - name: Generate keygen
       command: consul keygen
       register: consul_key
@@ -36,7 +38,7 @@
         owner: consul
         group: consul
       loop:
-        - server.hcl
+        - consul-erver.hcl
         - bootstrap.hcl
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
     - name: Copy over systemd service file
@@ -59,17 +61,17 @@
     - name: Enable consul service
       become: true
       ansible.builtin.systemd:
-        name: consul
+        name: consul-server
         enabled: true
     - name: Start consul service
       become: true
       ansible.builtin.systemd:
-        name: consul
+        name: consul-server
         state: started
     - name: Restart consul service
       become: true
       ansible.builtin.systemd:
-        name: consul
+        name: consul-server
         state: restarted
     - name: Reload Daemon
       become: true
