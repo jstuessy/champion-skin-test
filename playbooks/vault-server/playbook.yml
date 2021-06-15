@@ -1,6 +1,5 @@
 ---
 - name: Setup Vault Server
-  # TODO: make sure this is named subject_vault_server
   hosts: subject_vault_server
   vars:
     consul_version: "1.9.5"
@@ -9,7 +8,7 @@
     - import_role:
         name: general-setup
     - import_role:
-        name: consul-install
+        name: consul-client-setup
     - name: Ensure vault group exists
       ansible.builtin.group:
         name: vault
