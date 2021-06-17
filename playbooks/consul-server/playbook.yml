@@ -9,6 +9,7 @@
         name: general-setup
     - import_role:
         name: consul-install
+        # TODO: Put some of this block inside consul-client-setup, so that we can share behavior
     - name: Find or generate consul encryption key
       block:
         - name: Check for existing encryption key
@@ -64,7 +65,9 @@
         group: consul
       loop:
         - server.hcl
-        - ui.hcl
+      vars:
+        consul_ui: "{{ inventory_hostname == bootstrap_hostname }}"
+        retry_join_servers: "{{ groups.subject_consul_server }}"
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
     - name: Copy over systemd service file
       become: true
@@ -74,15 +77,16 @@
         mode: "660"
         owner: consul
         group: consul
-      vars:
-        deployment_type: "{{ 'bootstrap' if inventory_hostname == bootstrap_hostname else 'server' }}"
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#start-the-consul-service
     - name: Validate consul configuration
       become: true
       command: "consul validate /etc/consul.d/{{ item }}"
       loop:
         - server.hcl
-        - ui.hcl
+    - name: Reload Daemon
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true
     - name: Enable consul service
       become: true
       ansible.builtin.systemd:
@@ -98,7 +102,3 @@
       ansible.builtin.systemd:
         name: consul-server
         state: restarted
-    - name: Reload Daemon
-      become: true
-      ansible.builtin.systemd:
-        daemon_reload: true    

@@ -1,5 +1,5 @@
 - import_role:
-  name: consul-install
+    name: consul-install
 - name: Copy consul configuration to servers
   become: true
   ansible.builtin.template:
@@ -10,6 +10,8 @@
     group: consul
   loop:
     - client.hcl
+  vars:
+    retry_join_servers: "{{ groups.subject_consul_server }}"
 - name: Copy over systemd service file
   become: true
   ansible.builtin.template:
