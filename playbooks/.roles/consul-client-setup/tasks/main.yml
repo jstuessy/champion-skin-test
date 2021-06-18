@@ -1,5 +1,7 @@
 - import_role:
     name: consul-install
+- import_role:
+    name: consul-encryption-key-check
 - name: Copy consul configuration to servers
   become: true
   ansible.builtin.template:

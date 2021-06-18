@@ -17,9 +17,3 @@
   loop:
     - botocore
     - boto3
-- name: Ensure project tmp directory exists
-  ansible.builtin.file:
-    path: "tmp/"
-    state: directory
-  run_once: true
-  delegate_to: "localhost"

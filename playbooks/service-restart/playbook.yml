@@ -1,0 +1,22 @@
+- hosts: all
+  tasks:
+    - name: Start consul service
+      become: true
+      ansible.builtin.systemd:
+      name: {{ services }}
+      state: stopped
+      loop: 
+      - "vault-server"
+      - "consul-server"
+    - name: Reload Daemon
+      become: true
+      ansible.builtin.systemd:
+      daemon_reload: true
+    - name: Start consul service
+      become: true
+      ansible.builtin.systemd:
+      name: {{ services }}
+      state: restarted
+      loop: 
+      - "vault-server"
+      - "consul-server"

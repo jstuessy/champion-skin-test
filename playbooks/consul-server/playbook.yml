@@ -9,35 +9,27 @@
         name: general-setup
     - import_role:
         name: consul-install
-        # TODO: Put some of this block inside consul-client-setup, so that we can share behavior
+    - import_role:
+        name: consul-encryption-key-check
     - name: Find or generate consul encryption key
       block:
-        - name: Check for existing encryption key
-          register: consul_key_file_check
-          ansible.builtin.stat:
-            path: "tmp/consul_key.txt"
-        - name: Register existing Consul encryption key
-          delegate_to: "localhost"
-          when: consul_key_file_check.stat.isfile is defined
-          ansible.builtin.set_fact:
-            consul_key: "{{ lookup('file', 'tmp/consul_key.txt') }}"
-        - name: Generate keygen
-          command: consul keygen
-          register: consul_keygen
-          run_once: true
-          when: consul_key_file_check.stat.isfile is not defined
-        - name: Write new Consul encryption key to local file
-          delegate_to: "localhost"
-          when: consul_key_file_check.stat.isfile is not defined
-          run_once: true
-          ansible.builtin.copy:
-            content: "{{ consul_keygen.stdout }}"
-            dest: "tmp/consul_key.txt"
-        - name: Register new Consul encryption key
-          delegate_to: "localhost"
-          when: consul_key_file_check.stat.isfile is not defined
-          ansible.builtin.set_fact:
-            consul_key: "{{ lookup('file', 'tmp/consul_key.txt') }}"
+      - name: Generate keygen
+        command: consul keygen
+        register: consul_keygen
+        run_once: true
+        when: consul_key_file_check.stat.isfile is not defined
+      - name: Write new Consul encryption key to local file
+        delegate_to: "localhost"
+        when: consul_key_file_check.stat.isfile is not defined
+        run_once: true
+        ansible.builtin.copy:
+          content: "{{ consul_keygen.stdout }}"
+          dest: "/tmp/consul_key.txt"
+      - name: Register new Consul encryption key
+        delegate_to: "localhost"
+        when: consul_key_file_check.stat.isfile is not defined
+        ansible.builtin.set_fact:
+          consul_key: "{{ lookup('file', '/tmp/consul_key.txt') }}"
     - name: Determine which server will be the Bootstrap server
       run_once: true
       set_fact:
