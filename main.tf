@@ -39,68 +39,67 @@ resource "aws_security_group" "allow_consul_server" {
   description = "Allow Consul Server traffic"
 
   # TODO: Switch to make it so only in-network machines can talk to each other
-  # TODO: ["0.0.0.0/0"] -> ["0.0.0.0/0", "::/0"]
   ingress {
     description = "HTTP"
     from_port   = 8500
     to_port     = 8500
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
     description = "DNS"
     from_port   = 8600
     to_port     = 8600
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
-    description = "DNS udp"
+    description = "DNS UDP"
     from_port   = 8600
     to_port     = 8600
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
-    description = "Lan Serf"
+    description = "LAN Serf"
     from_port   = 8301
     to_port     = 8301
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
-    description = "Lan Serf udp"
+    description = "LAN Serf UDP"
     from_port   = 8301
     to_port     = 8301
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
-    description = "Wan Serf"
+    description = "WAN Serf"
     from_port   = 8302
     to_port     = 8302
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
-    description = "Wan Serf udp"
+    description = "WAN Serf UDP"
     from_port   = 8302
     to_port     = 8302
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   ingress {
     description = "Server RPC"
     from_port   = 8300
     to_port     = 8300
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
 }
 resource "aws_security_group" "allow_vault_server" {
@@ -111,7 +110,7 @@ resource "aws_security_group" "allow_vault_server" {
     from_port   = 8200
     to_port     = 8200
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0", "::/0"]
   }
 }
 # resource "aws_eip" "consul_elastic_ip" {
