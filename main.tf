@@ -37,7 +37,7 @@ resource "aws_security_group" "allow_ssh" {
 resource "aws_security_group" "allow_consul_client" {
   name        = "allow_consul_client"
   description = "Allow Consul Client traffic"
-    ingress {
+  ingress {
     description = "LAN Serf TCP"
     from_port   = 8301
     to_port     = 8301
@@ -164,6 +164,7 @@ resource "aws_instance" "consul_server" {
   tags = {
     subject = "consul-server"
     owner   = "champion-skinner"
+
   }
 }
 
@@ -203,8 +204,8 @@ output "consul_server_public_ips" {
   ])
 }
 
-output "vault_server_public_ips"{
+output "vault_server_public_ips" {
   value = toset([
-      for vault_server in aws_instance.vault_server : vault_server.public_ip
+    for vault_server in aws_instance.vault_server : vault_server.public_ip
   ])
 }
