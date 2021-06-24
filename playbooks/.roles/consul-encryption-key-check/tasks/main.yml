@@ -5,10 +5,6 @@
     path: "/tmp/consul_key.txt"
 - name: Register existing Consul encryption key
   delegate_to: "localhost"
-  # when: consul_key_file_check.stat.isfile is defined
+  when: consul_key_file_check.stat.exists
   ansible.builtin.set_fact:
     consul_key: "{{ lookup('file', '/tmp/consul_key.txt') }}"
-
-
-
-

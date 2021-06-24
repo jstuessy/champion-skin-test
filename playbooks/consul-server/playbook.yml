@@ -17,17 +17,17 @@
         command: consul keygen
         register: consul_keygen
         run_once: true
-        when: consul_key_file_check.stat.isfile is not defined
+        when: not consul_key_file_check.stat.exists
       - name: Write new Consul encryption key to local file
         delegate_to: "localhost"
-        when: consul_key_file_check.stat.isfile is not defined
+        when: not consul_key_file_check.stat.exists
         run_once: true
         ansible.builtin.copy:
           content: "{{ consul_keygen.stdout }}"
           dest: "/tmp/consul_key.txt"
       - name: Register new Consul encryption key
         delegate_to: "localhost"
-        when: consul_key_file_check.stat.isfile is not defined
+        when: not consul_key_file_check.stat.exists
         ansible.builtin.set_fact:
           consul_key: "{{ lookup('file', '/tmp/consul_key.txt') }}"
     - name: Determine which server will be the Bootstrap server
