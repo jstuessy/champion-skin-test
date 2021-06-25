@@ -5,92 +5,117 @@
     consul_version: "1.9.5"
     vault_version: "1.7.2"
   tasks:
-    - amazon.aws.ec2_metadata_facts:
-    - import_role:
-        name: general-setup
-    - import_role:
-        name: consul-client-setup
-    - name: Ensure vault group exists
-      ansible.builtin.group:
-        name: vault
-        state: present
-      become: true
-    - name: Ensure vault user exists
-      ansible.builtin.user:
-        name: vault
-        group: vault
-        system: true
-        shell: /sbin/nologin
-        createhome: false
-      become: true
-    - name: Ensure data directory exists
-      ansible.builtin.file:
-        path: /opt/vault
-        state: directory
-        owner: vault
-        group: vault
-      become: true
-    - name: Ensure configuration directory exists
-      ansible.builtin.file:
-        path: /etc/vault.d
-        state: directory
-        owner: vault
-        group: vault
-      become: true
-    - name: Download binary
-      get_url:
-        url: https://releases.hashicorp.com/vault/{{vault_version}}/vault_{{vault_version}}_linux_amd64.zip
-        dest: /tmp/vault_{{vault_version}}_linux_amd64.zip
-        owner: vault
-        group: vault
-        mode: "755"
-      become: true
-    - name: Unzip binary
-      unarchive:
-        src: /tmp/vault_{{vault_version}}_linux_amd64.zip
-        dest: /usr/bin/
-        remote_src: true
-        owner: vault
-        group: vault
-        mode: "755"
-      become: true
-    - name: Verify that vault is usable
-      command: "vault --version"
-    - name: Copy over systemd service file
-      become: true
-      ansible.builtin.template:
-        src: vault-server.service.j2
-        dest: /usr/lib/systemd/system/vault-server.service
-        mode: "660"
-        owner: vault
-        group: vault
-    - name: Copy over vault configuration files
-      become: true
-      ansible.builtin.template:
-        src: "{{ item }}.j2"
-        dest: "/etc/vault.d/{{ item }}"
-        mode: "640"
-        owner: vault
-        group: vault
-      loop:
-        - "server.hcl"
-        - "ui.hcl"
-    - name: Enable vault service
-      become: true
-      ansible.builtin.systemd:
-        name: vault-server
-        enabled: true
-    - name: Start vault service
-      become: true
-      ansible.builtin.systemd:
-        name: vault-server
-        state: started
+    # - amazon.aws.ec2_metadata_facts:
+    # - import_role:
+    #     name: general-setup
+    # - import_role:
+    #     name: consul-client-setup
+    # - name: Ensure vault group exists
+    #   ansible.builtin.group:
+    #     name: vault
+    #     state: present
+    #   become: true
+    # - name: Ensure vault user exists
+    #   ansible.builtin.user:
+    #     name: vault
+    #     group: vault
+    #     system: true
+    #     shell: /sbin/nologin
+    #     createhome: false
+    #   become: true
+    # - name: Ensure data directory exists
+    #   ansible.builtin.file:
+    #     path: /opt/vault
+    #     state: directory
+    #     owner: vault
+    #     group: vault
+    #   become: true
+    # - name: Ensure configuration directory exists
+    #   ansible.builtin.file:
+    #     path: /etc/vault.d
+    #     state: directory
+    #     owner: vault
+    #     group: vault
+    #   become: true
+    # - name: Download binary
+    #   get_url:
+    #     url: https://releases.hashicorp.com/vault/{{vault_version}}/vault_{{vault_version}}_linux_amd64.zip
+    #     dest: /tmp/vault_{{vault_version}}_linux_amd64.zip
+    #     owner: vault
+    #     group: vault
+    #     mode: "755"
+    #   become: true
+    # - name: Unzip binary
+    #   unarchive:
+    #     src: /tmp/vault_{{vault_version}}_linux_amd64.zip
+    #     dest: /usr/bin/
+    #     remote_src: true
+    #     owner: vault
+    #     group: vault
+    #     mode: "755"
+    #   become: true
+    # - name: Verify that vault is usable
+    #   command: "vault --version"
+    # - name: Copy over systemd service file
+    #   become: true
+    #   ansible.builtin.template:
+    #     src: vault-server.service.j2
+    #     dest: /usr/lib/systemd/system/vault-server.service
+    #     mode: "660"
+    #     owner: vault
+    #     group: vault
+    # - name: Copy over vault configuration files
+    #   become: true
+    #   ansible.builtin.template:
+    #     src: "{{ item }}.j2"
+    #     dest: "/etc/vault.d/{{ item }}"
+    #     mode: "640"
+    #     owner: vault
+    #     group: vault
+    #   loop:
+    #     - "server.hcl"
+    #     - "ui.hcl"
+    # - Look for vault secrets
+    # - Store vault secrets
+    # - 
+    # - name: Enable vault service
+    #   become: true
+    #   ansible.builtin.systemd:
+    #     name: vault-server
+    #     enabled: true
+    # - name: Start vault service
+    #   become: true
+    #   ansible.builtin.systemd:
+    #     name: vault-server
+    #     state: started
     - name: Restart vault service
       become: true
       ansible.builtin.systemd:
         name: vault-server
         state: restarted
-    - name: Reload Daemon
-      become: true
-      ansible.builtin.systemd:
-        daemon_reload: true
+    # - name: Reload Daemon
+    #   become: true
+    #   ansible.builtin.systemd:
+    #     daemon_reload: true
+    - name: Verify if vault is initialized
+      command: "vault operator init -status -format=json"
+      environment:
+        VAULT_ADDR: "http://127.0.0.1:8200"
+      register: vault_operator_init_status
+      failed_when: 
+        - vault_operator_init_status.rc not in [ 0, 2 ]
+        - not vault_operator_init_status.stderr
+    - name: Initialize vault if not already initialized
+      command: "vault operator init -format=json"
+      register: vault_unseal_keys
+      environment:
+        VAULT_ADDR: "http://127.0.0.1:8200"
+      run_once: true
+      when: not (vault_operator_init_status.stdout | from_json)["Initialized"]
+    - name: Store unseal encryption keys and root token
+      delegate_to: "localhost"
+      when: not vault_unseal_keys.stat.exists
+      run_once: true
+      ansible.builtin.copy:
+        content: "{{ vault_unseal_keys }}"
+        dest: "/tmp/vault_unseal_keys.txt"

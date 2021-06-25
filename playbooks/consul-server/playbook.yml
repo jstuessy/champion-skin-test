@@ -44,6 +44,9 @@
           consul_ui: true
         state: present
         region: us-west-2
+    # - name: Import tag to Terraform
+    #   command: terraform import
+    #   delegate_to: "localhost"
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#generate-tls-certificates-for-rpc-encryption
     # - name: Generate tls certificates for rpc encryption
     #   command: consul tls ca create
