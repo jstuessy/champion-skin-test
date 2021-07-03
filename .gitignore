@@ -5,3 +5,4 @@
 .env
 provider.tf
 /playbooks/*/tmp/
+experiment.yml
