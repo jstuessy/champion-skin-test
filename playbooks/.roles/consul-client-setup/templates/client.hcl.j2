@@ -1,13 +1,4 @@
 {{ ansible_managed | comment }}
-server = true
-bootstrap_expect = 3
 data_dir = "/opt/consul"
 retry_join = {{ retry_join_servers | to_json }}
 encrypt = "{{  consul_key  }}"
-
-{% if consul_ui %}
-ui_config = {
-  enabled = true
-}
-client_addr = "0.0.0.0"
-{% endif %}

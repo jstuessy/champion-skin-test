@@ -6,11 +6,30 @@
   tasks:
     - amazon.aws.ec2_metadata_facts:
     - import_role:
-        name: consul-agent
-    - name: Generate keygen
-      command: consul keygen
-      register: consul_key
-      run_once: true
+        name: general-setup
+    - import_role:
+        name: consul-install
+    - import_role:
+        name: consul-encryption-key-check
+    - name: Find or generate consul encryption key
+      block:
+      - name: Generate keygen
+        command: consul keygen
+        register: consul_keygen
+        run_once: true
+        when: not consul_key_file_check.stat.exists
+      - name: Write new Consul encryption key to local file
+        delegate_to: "localhost"
+        when: not consul_key_file_check.stat.exists
+        run_once: true
+        ansible.builtin.copy:
+          content: "{{ consul_keygen.stdout }}"
+          dest: "/tmp/consul_key.txt"
+      - name: Register new Consul encryption key
+        delegate_to: "localhost"
+        when: not consul_key_file_check.stat.exists
+        ansible.builtin.set_fact:
+          consul_key: "{{ lookup('file', '/tmp/consul_key.txt') }}"
     - name: Determine which server will be the Bootstrap server
       run_once: true
       set_fact:
@@ -21,9 +40,13 @@
       amazon.aws.ec2_tag:
         resource: "{{ ansible_ec2_instance_id }}"
         tags:
+          # TODO: terraform -> ansible -> terraform, diff
           consul_ui: true
         state: present
         region: us-west-2
+    # - name: Import tag to Terraform
+    #   command: terraform import
+    #   delegate_to: "localhost"
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#generate-tls-certificates-for-rpc-encryption
     # - name: Generate tls certificates for rpc encryption
     #   command: consul tls ca create
@@ -37,44 +60,40 @@
         group: consul
       loop:
         - server.hcl
-        - bootstrap.hcl
+      vars:
+        consul_ui: "{{ inventory_hostname == bootstrap_hostname }}"
+        retry_join_servers: "{{ groups.subject_consul_server }}"
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
     - name: Copy over systemd service file
       become: true
       ansible.builtin.template:
-        src: consul.service.j2
-        dest: /usr/lib/systemd/system/consul.service
+        src: consul-server.service.j2
+        dest: /usr/lib/systemd/system/consul-server.service
         mode: "660"
         owner: consul
         group: consul
-      vars:
-        deployment_type: "{{ 'bootstrap' if inventory_hostname == bootstrap_hostname else 'server' }}"
     # https://learn.hashicorp.com/tutorials/consul/deployment-guide#start-the-consul-service
     - name: Validate consul configuration
       become: true
       command: "consul validate /etc/consul.d/{{ item }}"
       loop:
         - server.hcl
-        - bootstrap.hcl
-    - name: Enable consul service
-      become: true
-      ansible.builtin.systemd:
-        name: consul
-        enabled: true
-    - name: Start consul service
-      become: true
-      ansible.builtin.systemd:
-        name: consul
-        state: started
-    - name: Restart consul service
-      become: true
-      ansible.builtin.systemd:
-        name: consul
-        state: restarted
     - name: Reload Daemon
       become: true
       ansible.builtin.systemd:
         daemon_reload: true
-    # TODO: Only do when file has changed
-
-      
+    - name: Enable consul service
+      become: true
+      ansible.builtin.systemd:
+        name: consul-server
+        enabled: true
+    - name: Start consul service
+      become: true
+      ansible.builtin.systemd:
+        name: consul-server
+        state: started
+    - name: Restart consul service
+      become: true
+      ansible.builtin.systemd:
+        name: consul-server
+        state: restarted

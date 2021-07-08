@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+    - name: Remove previously generated encryption key for clean sweep
+      ansible.builtin.file:
+        path: /tmp/consul_key.txt
+        state: absent
+    # - name: Terraform destroy
+    #   shell: terraform destroy -auto-approve
