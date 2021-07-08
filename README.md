@@ -38,3 +38,6 @@ Jun 24 00:58:40 ip-172-31-17-120 vault[10800]: Error initializing listener of ty
 Jun 24 00:58:40 ip-172-31-17-120 vault[10800]: 2021-06-24T00:58:40.460Z [WARN]  no `api_addr` value specified in config or in VAULT_API_ADDR; falling back to detection if possible, but this value should be manually set       
 
 Jun 24 01:26:09 ip-172-31-17-120 systemd[1]: /lib/systemd/system/vault-server.service:33: Unknown key name 'StartLimitIntervalSec' in section 'Service', ignoring.
+
+ubuntu@ip-172-31-29-132:~$ curl http://active.vault.service.dc1.consul:8200
+curl: (6) Could not resolve host: active.vault.service.dc1.consul

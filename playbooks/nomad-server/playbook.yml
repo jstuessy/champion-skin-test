@@ -1,0 +1,14 @@
+---
+- name: Setup Nomad Server
+  hosts: subject_nomad_server
+  vars:
+    consul_version: "1.9.5"
+    vault_version: "1.7.2"
+  tasks:
+    - amazon.aws.ec2_metadata_facts:
+    - import_role:
+        name: general-setup
+    - import_role:
+        name: consul-client-setup
+    - name: Talk to client
+      command: curl http://active.vault.service.dc1.consul:8200
