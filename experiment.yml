@@ -1,4 +1,0 @@
-- hosts: subject_vault_server
-  tasks:
-    - debug:
-        var: groups
