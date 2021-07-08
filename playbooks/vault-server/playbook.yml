@@ -134,13 +134,12 @@
       set_fact:
         vault_initial_root_token: "{{ (lookup('file', '/tmp/vault_unseal_keys.json') | from_json)['root_token'] }}"
       when: (vault_operator_init_status.stdout | from_json)["Initialized"]    
-    - name: Unseal vault
-      command: vault operator unseal {{ item }}
+    - name: Unseal vault 
+      command: "vault operator unseal {{ item }}"
       loop: "{{ vault_unseal_keys }}"
       environment:
         VAULT_ADDR: "http://127.0.0.1:8200"
     - name: Authenticate root token
-      become: true
-      command: vault login "{{ vault_initial_root_token }}"
+      command: "vault login {{ vault_initial_root_token }}"
       environment:
         VAULT_ADDR: "http://127.0.0.1:8200"
