@@ -14,14 +14,14 @@
     - client.hcl
   vars:
     retry_join_servers: "{{ groups.subject_consul_server }}"
-- name: Copy over systemd service file
+- name: Copy Resolved configuration to servers
   become: true
   ansible.builtin.template:
-    src: consul-client.service.j2
-    dest: /usr/lib/systemd/system/consul-client.service
-    mode: "660"
-    owner: consul
-    group: consul
+    src: "resolved.conf.j2"
+    dest: "/etc/systemd/resolved.conf"
+    mode: "644"
+    owner: root
+    group: root
 - name: Validate consul configuration
   become: true
   command: "consul validate /etc/consul.d/{{ item }}"
@@ -46,3 +46,29 @@
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
+- name: Copy over systemd service file
+  become: true
+  ansible.builtin.template:
+    src: consul-client.service.j2
+    dest: /usr/lib/systemd/system/consul-client.service
+    mode: "660"
+    owner: consul
+    group: consul
+- name: Forward TCP traffic to consul
+  become: true
+  ansible.builtin.iptables:
+    table: nat
+    destination: localhost
+    protocol: tcp
+    match: tcp
+    destination_port: 8600
+    source_port: 53
+- name: Forward UDP traffic to consul
+  become: true
+  ansible.builtin.iptables:
+    table: nat
+    destination: localhost
+    protocol: udp
+    match: udp
+    destination_port: 8600
+    source_port: 53

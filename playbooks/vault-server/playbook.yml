@@ -139,7 +139,3 @@
       loop: "{{ vault_unseal_keys }}"
       environment:
         VAULT_ADDR: "http://127.0.0.1:8200"
-    - name: Authenticate root token
-      command: "vault login {{ vault_initial_root_token }}"
-      environment:
-        VAULT_ADDR: "http://127.0.0.1:8200"
