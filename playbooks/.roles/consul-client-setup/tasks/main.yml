@@ -14,7 +14,7 @@
     - client.hcl
   vars:
     retry_join_servers: "{{ groups.subject_consul_server }}"
-- name: Copy Resolved configuration to servers
+- name: Copy systemd resolved configuration to servers
   become: true
   ansible.builtin.template:
     src: "resolved.conf.j2"
@@ -27,6 +27,14 @@
   command: "consul validate /etc/consul.d/{{ item }}"
   loop:
     - client.hcl
+- name: Copy over systemd service file
+  become: true
+  ansible.builtin.template:
+    src: consul-client.service.j2
+    dest: /usr/lib/systemd/system/consul-client.service 
+    mode: "660"
+    owner: consul
+    group: consul
 - name: Enable consul service
   become: true
   ansible.builtin.systemd:
@@ -46,29 +54,45 @@
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
-- name: Copy over systemd service file
+# - name: Redirect local DNS (1/4)
+#   become: true
+#   iptables:
+#     table: nat
+#     chain: PREROUTING
+#     protocol: udp
+#     match: udp
+#     destination_port: 53
+#     jump: REDIRECT
+#     to_ports: 8600
+# - name: Redirect local DNS (2/4)
+#   become: true
+#   iptables:
+#     table: nat
+#     chain: PREROUTING
+#     protocol: tcp
+#     match: tcp
+#     destination_port: 53
+#     jump: REDIRECT
+#     to_ports: 8600
+- name: Redirect local DNS (3/4)
   become: true
-  ansible.builtin.template:
-    src: consul-client.service.j2
-    dest: /usr/lib/systemd/system/consul-client.service
-    mode: "660"
-    owner: consul
-    group: consul
-- name: Forward TCP traffic to consul
-  become: true
-  ansible.builtin.iptables:
+  iptables:
     table: nat
-    destination: localhost
-    protocol: tcp
-    match: tcp
-    destination_port: 8600
-    source_port: 53
-- name: Forward UDP traffic to consul
-  become: true
-  ansible.builtin.iptables:
-    table: nat
-    destination: localhost
+    chain: OUTPUT
     protocol: udp
     match: udp
-    destination_port: 8600
-    source_port: 53
+    destination_port: 53
+    jump: REDIRECT
+    to_ports: 8600
+    destination: localhost
+- name: Redirect local DNS (4/4)
+  become: true
+  iptables:
+    table: nat
+    chain: OUTPUT
+    protocol: tcp
+    match: tcp
+    destination_port: 53
+    jump: REDIRECT
+    to_ports: 8600
+    destination: localhost
