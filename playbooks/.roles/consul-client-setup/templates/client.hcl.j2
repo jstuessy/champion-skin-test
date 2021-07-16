@@ -2,3 +2,4 @@
 data_dir = "/opt/consul"
 retry_join = {{ retry_join_servers | to_json }}
 encrypt = "{{  consul_key  }}"
+recursors = ["127.0.0.53"]

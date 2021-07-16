@@ -73,10 +73,10 @@ Vagrant.configure("2") do |config|
     cd project/
     source .env
     terraform init
-    
     # Run manually
     ln --symbolic --force `pwd`/ansible.example.cfg ~/.ansible.cfg
-
     ansible-galaxy collection install amazon.aws
+    terraform apply -auto-approve
+    ansible-playbook playbooks/consul-server/playbook.yml playbooks/vault-server/playbook.yml playbooks/nomad-server/playbook.yml
   SHELL
 end
