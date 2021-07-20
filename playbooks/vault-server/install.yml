@@ -74,7 +74,6 @@
         group: vault
       loop:
         - "server.hcl"
-        - "ui.hcl"
     # - Look for vault secrets
     # - Store vault secrets
     - name: Enable vault service
