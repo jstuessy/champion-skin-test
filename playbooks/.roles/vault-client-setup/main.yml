@@ -1,0 +1,46 @@
+- name: Ensure vault group exists
+  ansible.builtin.group:
+    name: vault
+    state: present
+  become: true
+- name: Ensure vault user exists
+  ansible.builtin.user:
+    name: vault
+    group: vault
+    system: true
+    shell: /sbin/nologin
+    createhome: false
+  become: true
+- name: Ensure data directory exists
+  ansible.builtin.file:
+    path: /opt/vault
+    state: directory
+    owner: vault
+    group: vault
+  become: true
+- name: Ensure configuration directory exists
+  ansible.builtin.file:
+    path: /etc/vault.d
+    state: directory
+    owner: vault
+    group: vault
+  become: true
+- name: Download binary
+  get_url:
+    url: "https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: "/tmp/vault_{{vault_version}}_linux_amd64.zip"
+    owner: vault
+    group: vault
+    mode: "755"
+  become: true
+- name: Unzip binary
+  unarchive:
+    src: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: /usr/bin/
+    remote_src: true
+    owner: vault
+    group: vault
+    mode: "755"
+  become: true
+- name: Verify that vault is usable
+  command: "vault --version"
