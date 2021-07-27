@@ -11,9 +11,22 @@
     - import_role:
         name: consul-client-setup
     - import_role:
-        name: vault-client-setup
+        name: vault-install
     # - Look for vault secrets
     # - Store vault secrets
+    - name: Ensure vault group exists
+      ansible.builtin.group:
+        name: vault
+        state: present
+      become: true
+    - name: Ensure vault user exists
+      ansible.builtin.user:
+        name: vault
+        group: vault
+        system: true
+        shell: /sbin/nologin
+        createhome: false
+      become: true
     - name: Copy over systemd service file
       become: true
       ansible.builtin.template:

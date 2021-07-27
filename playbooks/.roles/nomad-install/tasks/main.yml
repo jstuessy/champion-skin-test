@@ -1,0 +1,29 @@
+    - name: Ensure nomad group exists
+      ansible.builtin.group:
+        name: nomad
+        state: present
+      become: true
+    - name: Ensure nomad user exists
+      ansible.builtin.user:
+        name: nomad
+        group: nomad
+        system: true
+        home: /etc/nomad.d
+        shell: /bin/false
+        createhome: true
+      become: true
+    - name: Download binary zip
+      ansible.builtin.get_url:
+        url: "https://releases.hashicorp.com/nomad/{{ nomad_version }}/nomad_{{ nomad_version }}_linux_amd64.zip"
+        dest: "/tmp/"
+        owner: nomad
+        group: nomad
+      become: true
+    - name: Unzip binary
+      ansible.builtin.unarchive:
+        src: "/tmp/nomad_{{ nomad_version }}_linux_amd64.zip"
+        dest: /usr/bin/
+        remote_src: true
+        owner: nomad
+        group: nomad
+      become: true

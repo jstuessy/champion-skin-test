@@ -1,6 +1,6 @@
 ---
-- name: Setup Nomad Server
-  hosts: subject_nomad_server
+- name: Setup Nomad Client
+  hosts: subject_nomad_client
   vars:
     consul_version: "1.9.5"
     vault_version: "1.7.2"
@@ -18,8 +18,8 @@
     - name: Copy over systemd service file
       become: true
       ansible.builtin.template:
-        src: nomad-server.service.j2
-        dest: /etc/systemd/system/nomad-server.service
+        src: nomad-client.service.j2
+        dest: /etc/systemd/system/nomad-client.service
         mode: "660"
         owner: nomad
         group: nomad
@@ -32,21 +32,21 @@
         owner: nomad
         group: nomad
       loop:
-        - "nomad-server.hcl"
+        - "nomad-client.hcl"
     - name: Enable nomad service
       become: true
       ansible.builtin.systemd:
-        name: nomad-server
+        name: nomad-client
         enabled: true
     - name: Start nomad service
       become: true
       ansible.builtin.systemd:
-        name: nomad-server
+        name: nomad-client
         state: started
     - name: Restart nomad service
       become: true
       ansible.builtin.systemd:
-        name: nomad-server
+        name: nomad-client
         state: restarted
     - name: Reload Daemon
       become: true

@@ -1,0 +1,34 @@
+{{ ansible_managed | comment }}
+data_dir  = "/var/lib/nomad"
+
+bind_addr = "0.0.0.0"
+
+server {
+  enabled          = true
+  bootstrap_expect = 3
+}
+
+client {
+  enabled       = true
+}
+
+ports {
+  http = 4646
+  rpc  = 4647
+  serf = 4648
+}
+
+plugin "raw_exec" {
+  config {
+    enabled = true
+  }
+}
+
+consul {
+  address = "127.0.0.1:8500"
+}
+
+vault {
+  enabled = true
+  address = "https://127.0.0.1:8200"
+}
