@@ -4,6 +4,7 @@ bootstrap_expect = 3
 data_dir = "/opt/consul"
 retry_join = {{ retry_join_servers | to_json }}
 encrypt = "{{  consul_key  }}"
+recursors = ["127.0.0.53"]
 
 {% if consul_ui %}
 ui_config = {

@@ -70,13 +70,16 @@ Vagrant.configure("2") do |config|
     apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     apt-get update
     apt-get install --yes --no-install-recommends ansible terraform python3-boto3 python3-botocore
+  SHELL
+  
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
     cd project/
     source .env
     terraform init
-    
     # Run manually
     ln --symbolic --force `pwd`/ansible.example.cfg ~/.ansible.cfg
-
     ansible-galaxy collection install amazon.aws
+    terraform apply -auto-approve
+    ansible-playbook playbooks/consul-server/install.yml playbooks/vault-server/install.yml playbooks/nomad-server/install.yml
   SHELL
 end

@@ -10,6 +10,10 @@
         name: general-setup
     - import_role:
         name: consul-client-setup
+    - import_role:
+        name: vault-install
+    # - Look for vault secrets
+    # - Store vault secrets
     - name: Ensure vault group exists
       ansible.builtin.group:
         name: vault
@@ -23,39 +27,6 @@
         shell: /sbin/nologin
         createhome: false
       become: true
-    - name: Ensure data directory exists
-      ansible.builtin.file:
-        path: /opt/vault
-        state: directory
-        owner: vault
-        group: vault
-      become: true
-    - name: Ensure configuration directory exists
-      ansible.builtin.file:
-        path: /etc/vault.d
-        state: directory
-        owner: vault
-        group: vault
-      become: true
-    - name: Download binary
-      get_url:
-        url: https://releases.hashicorp.com/vault/{{vault_version}}/vault_{{vault_version}}_linux_amd64.zip
-        dest: /tmp/vault_{{vault_version}}_linux_amd64.zip
-        owner: vault
-        group: vault
-        mode: "755"
-      become: true
-    - name: Unzip binary
-      unarchive:
-        src: /tmp/vault_{{vault_version}}_linux_amd64.zip
-        dest: /usr/bin/
-        remote_src: true
-        owner: vault
-        group: vault
-        mode: "755"
-      become: true
-    - name: Verify that vault is usable
-      command: "vault --version"
     - name: Copy over systemd service file
       become: true
       ansible.builtin.template:
@@ -74,9 +45,6 @@
         group: vault
       loop:
         - "server.hcl"
-        - "ui.hcl"
-    # - Look for vault secrets
-    # - Store vault secrets
     - name: Enable vault service
       become: true
       ansible.builtin.systemd:
@@ -137,9 +105,5 @@
     - name: Unseal vault 
       command: "vault operator unseal {{ item }}"
       loop: "{{ vault_unseal_keys }}"
-      environment:
-        VAULT_ADDR: "http://127.0.0.1:8200"
-    - name: Authenticate root token
-      command: "vault login {{ vault_initial_root_token }}"
       environment:
         VAULT_ADDR: "http://127.0.0.1:8200"

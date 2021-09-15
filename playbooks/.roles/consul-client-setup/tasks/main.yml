@@ -14,19 +14,27 @@
     - client.hcl
   vars:
     retry_join_servers: "{{ groups.subject_consul_server }}"
-- name: Copy over systemd service file
+- name: Copy systemd resolved configuration to servers
   become: true
   ansible.builtin.template:
-    src: consul-client.service.j2
-    dest: /usr/lib/systemd/system/consul-client.service
-    mode: "660"
-    owner: consul
-    group: consul
+    src: "resolved.conf.j2"
+    dest: "/etc/systemd/resolved.conf"
+    mode: "644"
+    owner: root
+    group: root
 - name: Validate consul configuration
   become: true
   command: "consul validate /etc/consul.d/{{ item }}"
   loop:
     - client.hcl
+- name: Copy over systemd service file
+  become: true
+  ansible.builtin.template:
+    src: consul-client.service.j2
+    dest: /usr/lib/systemd/system/consul-client.service 
+    mode: "660"
+    owner: consul
+    group: consul
 - name: Enable consul service
   become: true
   ansible.builtin.systemd:
@@ -46,3 +54,52 @@
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
+# - name: Redirect local DNS (1/4)
+#   become: true
+#   iptables:
+#     table: nat
+#     chain: PREROUTING
+#     protocol: udp
+#     match: udp
+#     destination_port: 53
+#     jump: REDIRECT
+#     to_ports: 8600
+# - name: Redirect local DNS (2/4)
+#   become: true
+#   iptables:
+#     table: nat
+#     chain: PREROUTING
+#     protocol: tcp
+#     match: tcp
+#     destination_port: 53
+#     jump: REDIRECT
+#     to_ports: 8600
+- name: Redirect local DNS (1/2)
+  become: true
+  iptables:
+    table: nat
+    chain: OUTPUT
+    protocol: udp
+    match: udp
+    destination_port: "53"
+    jump: REDIRECT
+    to_ports: "8600"
+    destination: localhost
+- name: Redirect local DNS (2/2)
+  become: true
+  iptables:
+    table: nat
+    chain: OUTPUT
+    protocol: tcp
+    match: tcp
+    destination_port: "53"
+    jump: REDIRECT
+    to_ports: "8600"
+    destination: localhost
+- name: Adding new primary DNS nameserver to resolv.conf
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/resolv.conf
+    line: "nameserver 127.0.0.1"
+    insertbefore: "nameserver 127.0.0.53"
+  when: not (lookup('file', '/etc/resolv.conf') | regex_search('nameserver 127.0.0.1'))
